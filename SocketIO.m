@@ -108,20 +108,14 @@
     NSURL *url = [NSURL URLWithString:s];
     [query release];
     
-    //TODO: make the request async and run the second request when the first request finished successfully
-    /*ASIHTTPRequest *request0 = [ASIHTTPRequest requestWithURL:[NSURL URLWithString:@"http://192.168.100.165:4444/iOS"] ];
-    [request0 startSynchronous];
-    
-    ASIHTTPRequest *request = [ASIHTTPRequest requestWithURL:url];
-    [request setDelegate:self];
-    [request startAsynchronous]; */
-    
+    //the first request to COOKIE_URL is to receive and save the cookies
     NSString *cookie = [NSString stringWithFormat:COOKIE_URL, _host, _port];
     __block ASIHTTPRequest *request = [ASIHTTPRequest requestWithURL: [NSURL URLWithString:cookie]];
     [request setCompletionBlock:^{
+      //this second request is the actual request for the handshake
       ASIHTTPRequest *request2 = [ASIHTTPRequest requestWithURL:url];
       [request2 setDelegate:self];
-      [request2 startAsynchronous];
+      [request2 startAsynchronous]; //requestFinished and requestFailed methods are the callbacks for this request
     }];
     [request setFailedBlock:^{
       NSError *error = [request error];
