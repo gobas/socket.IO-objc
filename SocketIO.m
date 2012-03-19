@@ -28,6 +28,7 @@
 #define DEBUG_LOGS 1
 #define HANDSHAKE_URL @"http://%@:%d/socket.io/1/?t=%d%@"
 #define SOCKET_URL @"ws://%@:%d/socket.io/1/websocket/%@"
+#define COOKIE_URL @"http://%@:%d/iOS"
 
 
 # pragma mark -
@@ -108,11 +109,24 @@
     [query release];
     
     //TODO: make the request async and run the second request when the first request finished successfully
-    ASIHTTPRequest *request0 = [ASIHTTPRequest requestWithURL:[NSURL URLWithString:@"http://192.168.100.165:4444/iOS"] ];
+    /*ASIHTTPRequest *request0 = [ASIHTTPRequest requestWithURL:[NSURL URLWithString:@"http://192.168.100.165:4444/iOS"] ];
     [request0 startSynchronous];
     
     ASIHTTPRequest *request = [ASIHTTPRequest requestWithURL:url];
     [request setDelegate:self];
+    [request startAsynchronous]; */
+    
+    NSString *cookie = [NSString stringWithFormat:COOKIE_URL, _host, _port];
+    __block ASIHTTPRequest *request = [ASIHTTPRequest requestWithURL: [NSURL URLWithString:cookie]];
+    [request setCompletionBlock:^{
+      ASIHTTPRequest *request2 = [ASIHTTPRequest requestWithURL:url];
+      [request2 setDelegate:self];
+      [request2 startAsynchronous];
+    }];
+    [request setFailedBlock:^{
+      NSError *error = [request error];
+      NSLog(@"ERROR: %@", [error localizedDescription]);
+    }];
     [request startAsynchronous];
   }
 }
