@@ -87,30 +87,34 @@
 
 - (void) connectToHost:(NSString *)host onPort:(NSInteger)port withParams:(NSDictionary *)params withNamespace:(NSString *)endpoint
 {
-    if (!_isConnected && !_isConnecting) 
-    {
-        _isConnecting = YES;
-        
-        _host = [host retain];
-        _port = port;
-        _endpoint = [endpoint copy];
-        
-        // create a query parameters string
-        NSMutableString *query = [[NSMutableString alloc] initWithString:@""];
-        [params enumerateKeysAndObjectsUsingBlock: ^(id key, id value, BOOL *stop) {
-            [query appendFormat:@"&%@=%@",key,value];
-        }];
-        
-        // do handshake via HTTP request
-        NSString *s = [NSString stringWithFormat:HANDSHAKE_URL, _host, _port, rand(), query];
-        [self log:[NSString stringWithFormat:@"Connecting to socket with URL: %@",s]];
-        NSURL *url = [NSURL URLWithString:s];
-        [query release];
-                
-        ASIHTTPRequest *request = [ASIHTTPRequest requestWithURL:url];
-        [request setDelegate:self];
-        [request startAsynchronous];
-    }
+  if (!_isConnected && !_isConnecting) 
+  {
+    _isConnecting = YES;
+    
+    _host = [host retain];
+    _port = port;
+    _endpoint = [endpoint copy];
+    
+    // create a query parameters string
+    NSMutableString *query = [[NSMutableString alloc] initWithString:@""];
+    [params enumerateKeysAndObjectsUsingBlock: ^(id key, id value, BOOL *stop) {
+      [query appendFormat:@"&%@=%@",key,value];
+    }];
+    
+    // do handshake via HTTP request
+    NSString *s = [NSString stringWithFormat:HANDSHAKE_URL, _host, _port, rand(), query];
+    [self log:[NSString stringWithFormat:@"Connecting to socket with URL: %@",s]];
+    NSURL *url = [NSURL URLWithString:s];
+    [query release];
+    
+    //TODO: make the request async and run the second request when the first request finished successfully
+    ASIHTTPRequest *request0 = [ASIHTTPRequest requestWithURL:[NSURL URLWithString:@"http://192.168.100.165:4444/iOS"] ];
+    [request0 startSynchronous];
+    
+    ASIHTTPRequest *request = [ASIHTTPRequest requestWithURL:url];
+    [request setDelegate:self];
+    [request startAsynchronous];
+  }
 }
 
 - (void) disconnect
@@ -532,6 +536,9 @@
 
 - (void) requestFinished:(ASIHTTPRequest *)request
 {
+  NSLog(@"cookies: %@", [[NSHTTPCookieStorage sharedHTTPCookieStorage] cookies]);
+
+  
     NSString *responseString = [request responseString];
     [self log:[NSString stringWithFormat:@"requestFinished() %@", responseString]];
     NSArray *data = [responseString componentsSeparatedByString:@":"];
